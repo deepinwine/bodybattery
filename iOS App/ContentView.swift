@@ -220,6 +220,7 @@ struct MetricGridView: View {
             MetricTile(title: "压力", value: "\(summary.stressScore)", tint: .orange)
             MetricTile(title: "恢复", value: "\(summary.recoveryScore)", tint: .green)
             MetricTile(title: "日耗", value: "\(summary.dailyDrainScore)", tint: .red)
+            MetricTile(title: "疲劳", value: "\(summary.fatigueLoadScore)", tint: .purple)
             MetricTile(title: "睡眠", value: "\(summary.sleepQualityScore)", tint: .blue)
             MetricTile(title: "HRV", value: summary.hrvSDNNMilliseconds.map { "\($0)ms" } ?? "--", tint: .cyan)
             MetricTile(title: "今日", value: "\(summary.activeEnergyKilocaloriesToday + summary.basalEnergyKilocaloriesToday)kcal", tint: .mint)

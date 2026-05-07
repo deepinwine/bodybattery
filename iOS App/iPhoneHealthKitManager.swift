@@ -136,6 +136,7 @@ final class iPhoneHealthKitManager: ObservableObject {
         async let steps = fetchQuantityTotal(.stepCount, unit: .count(), since: start, until: todayStart)
         async let activeEnergy = fetchQuantityTotal(.activeEnergyBurned, unit: .kilocalorie(), since: start, until: todayStart)
         async let sleep = fetchSleepMinutes(since: start, until: todayStart, limit: 160)
+        async let fatigueLoad = fetchWeightedFatigueLoad(until: todayStart)
 
         let baselineSleep = await sleep
         let sleepDays = max(1, baselineSleep.daysWithSleep)
@@ -151,6 +152,7 @@ final class iPhoneHealthKitManager: ObservableObject {
         let baselineHRV = await hrv
         let baselineSteps = await steps
         let baselineActiveEnergy = await activeEnergy
+        let baselineFatigueLoad = await fatigueLoad
 
         let baseline = BodyBatteryBaseline(
             restingHeartRate: baselineResting.value,
@@ -158,11 +160,35 @@ final class iPhoneHealthKitManager: ObservableObject {
             sleepQualityScore: sleepQuality,
             sleepMinutes: baselineSleep.minutes > 0 ? baselineSleep.minutes / sleepDays : nil,
             stepsToday: (baselineSteps.value ?? 0) / 7,
-            activeEnergyKilocaloriesToday: (baselineActiveEnergy.value ?? 0) / 7
+            activeEnergyKilocaloriesToday: (baselineActiveEnergy.value ?? 0) / 7,
+            fatigueLoadScore: baselineFatigueLoad
         )
         cachedBaselineDay = todayStart
         cachedBaseline = baseline
         return baseline
+    }
+
+    private func fetchWeightedFatigueLoad(until todayStart: Date) async -> Int {
+        let weights = [30, 24, 18, 12, 8, 5, 3]
+        var weightedSteps = 0
+        var weightedActiveEnergy = 0
+
+        for index in weights.indices {
+            guard let dayStart = Calendar.current.date(byAdding: .day, value: -(index + 1), to: todayStart),
+                  let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart) else { continue }
+
+            async let steps = fetchQuantityTotal(.stepCount, unit: .count(), since: dayStart, until: dayEnd)
+            async let activeEnergy = fetchQuantityTotal(.activeEnergyBurned, unit: .kilocalorie(), since: dayStart, until: dayEnd)
+            let daySteps = await steps
+            let dayActiveEnergy = await activeEnergy
+            let weight = weights[index]
+            weightedSteps += (daySteps.value ?? 0) * weight / 100
+            weightedActiveEnergy += (dayActiveEnergy.value ?? 0) * weight / 100
+        }
+
+        let stepLoad = min(45, weightedSteps / 220)
+        let energyLoad = min(55, weightedActiveEnergy / 12)
+        return min(100, max(0, stepLoad + energyLoad))
     }
 
     private func fetchLatestQuantity(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, since start: Date, until end: Date) async -> HealthQuantityResult {
@@ -317,7 +343,8 @@ final class iPhoneHealthKitManager: ObservableObject {
             sleepQualityScore: 70,
             sleepMinutes: 430,
             stepsToday: 7_200,
-            activeEnergyKilocaloriesToday: 390
+            activeEnergyKilocaloriesToday: 390,
+            fatigueLoadScore: 44
         )
         return BodyBatteryCalculator.summarize(input, baseline: baseline)
     }

@@ -9,6 +9,7 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
     let recoveryScore: Int
     let drainScore: Int
     let dailyDrainScore: Int
+    let fatigueLoadScore: Int
     let sleepQualityScore: Int
     let hrvSDNNMilliseconds: Int?
     let steps2h: Int
@@ -27,6 +28,7 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
         recoveryScore: Int = 0,
         drainScore: Int = 0,
         dailyDrainScore: Int = 0,
+        fatigueLoadScore: Int = 0,
         sleepQualityScore: Int = 0,
         hrvSDNNMilliseconds: Int? = nil,
         steps2h: Int = 0,
@@ -44,6 +46,7 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
         self.recoveryScore = min(100, max(0, recoveryScore))
         self.drainScore = min(100, max(0, drainScore))
         self.dailyDrainScore = min(100, max(0, dailyDrainScore))
+        self.fatigueLoadScore = min(100, max(0, fatigueLoadScore))
         self.sleepQualityScore = min(100, max(0, sleepQualityScore))
         self.hrvSDNNMilliseconds = hrvSDNNMilliseconds
         self.steps2h = max(0, steps2h)
@@ -63,6 +66,7 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
             recoveryScore: summary.recoveryScore,
             drainScore: summary.drainScore,
             dailyDrainScore: summary.dailyDrainScore,
+            fatigueLoadScore: summary.fatigueLoadScore,
             sleepQualityScore: summary.sleepQualityScore,
             hrvSDNNMilliseconds: summary.hrvSDNNMilliseconds,
             steps2h: summary.steps2h,
@@ -116,6 +120,7 @@ final class BatteryHistoryStore: ObservableObject {
             recoveryScore: latest.recoveryScore,
             drainScore: latest.drainScore,
             dailyDrainScore: latest.dailyDrainScore,
+            fatigueLoadScore: latest.fatigueLoadScore,
             sleepQualityScore: latest.sleepQualityScore,
             hrvSDNNMilliseconds: latest.hrvSDNNMilliseconds,
             steps2h: latest.steps2h,
@@ -197,6 +202,7 @@ final class BatteryHistoryStore: ObservableObject {
                     recoveryScore: max(0, 32 - dayOffset % 12),
                     drainScore: hourDrain,
                     dailyDrainScore: min(100, hourDrain + dayOffset % 18),
+                    fatigueLoadScore: min(100, 18 + dayOffset % 44 + (hour == 21 ? 6 : 0)),
                     sleepQualityScore: max(35, min(94, 78 - dayOffset % 16)),
                     hrvSDNNMilliseconds: max(28, min(68, 56 - dayOffset % 20)),
                     steps2h: hour == 15 ? 2_600 : 900,

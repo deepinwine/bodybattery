@@ -40,7 +40,7 @@ struct TodayView: View {
                 HStack(spacing: 8) {
                     WatchMetric(title: "压", value: "\(summary.stressScore)", color: .orange)
                     WatchMetric(title: "眠", value: "\(summary.sleepQualityScore)", color: .blue)
-                    WatchMetric(title: "日耗", value: "\(summary.dailyDrainScore)", color: .red)
+                    WatchMetric(title: "疲", value: "\(summary.fatigueLoadScore)", color: .red)
                 }
 
                 Button {

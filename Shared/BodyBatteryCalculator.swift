@@ -64,6 +64,7 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
     public var recoveryScore: Int
     public var drainScore: Int
     public var dailyDrainScore: Int
+    public var fatigueLoadScore: Int
     public var sleepQualityScore: Int
     public var hrvSDNNMilliseconds: Int?
     public var steps2h: Int
@@ -80,6 +81,7 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
         recoveryScore: Int,
         drainScore: Int,
         dailyDrainScore: Int = 0,
+        fatigueLoadScore: Int = 0,
         sleepQualityScore: Int = 0,
         hrvSDNNMilliseconds: Int? = nil,
         steps2h: Int = 0,
@@ -95,6 +97,7 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
         self.recoveryScore = Self.clamp(recoveryScore)
         self.drainScore = Self.clamp(drainScore)
         self.dailyDrainScore = Self.clamp(dailyDrainScore)
+        self.fatigueLoadScore = Self.clamp(fatigueLoadScore)
         self.sleepQualityScore = Self.clamp(sleepQualityScore)
         self.hrvSDNNMilliseconds = hrvSDNNMilliseconds
         self.steps2h = max(0, steps2h)
@@ -127,6 +130,7 @@ public struct BodyBatteryBaseline: Codable, Equatable, Sendable {
     public var sleepMinutes: Int?
     public var stepsToday: Int?
     public var activeEnergyKilocaloriesToday: Int?
+    public var fatigueLoadScore: Int?
 
     public init(
         restingHeartRate: Int? = nil,
@@ -134,7 +138,8 @@ public struct BodyBatteryBaseline: Codable, Equatable, Sendable {
         sleepQualityScore: Int? = nil,
         sleepMinutes: Int? = nil,
         stepsToday: Int? = nil,
-        activeEnergyKilocaloriesToday: Int? = nil
+        activeEnergyKilocaloriesToday: Int? = nil,
+        fatigueLoadScore: Int? = nil
     ) {
         self.restingHeartRate = restingHeartRate
         self.hrvSDNNMilliseconds = hrvSDNNMilliseconds
@@ -142,6 +147,7 @@ public struct BodyBatteryBaseline: Codable, Equatable, Sendable {
         self.sleepMinutes = sleepMinutes
         self.stepsToday = stepsToday
         self.activeEnergyKilocaloriesToday = activeEnergyKilocaloriesToday
+        self.fatigueLoadScore = fatigueLoadScore.map { min(100, max(0, $0)) }
     }
 }
 
@@ -172,9 +178,11 @@ public enum BodyBatteryCalculator {
         let recoveryScore = recoveryScore(for: input, sleepQualityScore: sleepQualityScore, baseline: baseline)
         let drainScore = drainScore(for: input)
         let dailyDrainScore = dailyDrainScore(for: input, baseline: baseline)
+        let fatigueLoadScore = baseline?.fatigueLoadScore ?? 0
+        let fatiguePenalty = fatigueLoadScore / 3
         let baselineLevel = baselineLevel(for: input, recoveryScore: recoveryScore, sleepQualityScore: sleepQualityScore, baseline: baseline)
         let shortRecoveryBuffer = input.sleepMinutes24h > 0 ? min(10, recoveryScore / 3) : recoveryScore
-        let level = min(100, max(0, baselineLevel + shortRecoveryBuffer - stressScore - drainScore - dailyDrainScore))
+        let level = min(100, max(0, baselineLevel + shortRecoveryBuffer - stressScore - drainScore - dailyDrainScore - fatiguePenalty))
 
         return BodyBatterySummary(
             level: level,
@@ -182,6 +190,7 @@ public enum BodyBatteryCalculator {
             recoveryScore: recoveryScore,
             drainScore: drainScore,
             dailyDrainScore: dailyDrainScore,
+            fatigueLoadScore: fatigueLoadScore,
             sleepQualityScore: sleepQualityScore,
             hrvSDNNMilliseconds: input.hrvSDNNMilliseconds,
             steps2h: input.steps2h,

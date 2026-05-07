@@ -40,6 +40,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             abs(previous.recoveryScore - summary.recoveryScore) > 1 ||
             abs(previous.drainScore - summary.drainScore) > 1 ||
             abs(previous.dailyDrainScore - summary.dailyDrainScore) > 1 ||
+            abs(previous.fatigueLoadScore - summary.fatigueLoadScore) > 1 ||
             abs((previous.hrvSDNNMilliseconds ?? 0) - (summary.hrvSDNNMilliseconds ?? 0)) > 1
     }
 
@@ -91,6 +92,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             recoveryScore: message["recoveryScore"] as? Int ?? 0,
             drainScore: message["drainScore"] as? Int ?? 0,
             dailyDrainScore: message["dailyDrainScore"] as? Int ?? 0,
+            fatigueLoadScore: message["fatigueLoadScore"] as? Int ?? 0,
             sleepQualityScore: message["sleepQualityScore"] as? Int ?? 0,
             hrvSDNNMilliseconds: message["hrvSDNNMilliseconds"] as? Int,
             steps2h: message["steps2h"] as? Int ?? 0,
@@ -116,6 +118,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             "recoveryScore": summary.recoveryScore,
             "drainScore": summary.drainScore,
             "dailyDrainScore": summary.dailyDrainScore,
+            "fatigueLoadScore": summary.fatigueLoadScore,
             "sleepQualityScore": summary.sleepQualityScore,
             "steps2h": summary.steps2h,
             "activeEnergyKilocalories2h": summary.activeEnergyKilocalories2h,

@@ -260,7 +260,8 @@ final class BodyBatteryCalculatorTests: XCTestCase {
             sleepQualityScore: 72,
             sleepMinutes: 460,
             stepsToday: 6_500,
-            activeEnergyKilocaloriesToday: 350
+            activeEnergyKilocaloriesToday: 350,
+            fatigueLoadScore: 76
         )
         let input = BodyBatteryInput(
             restingHeartRate: 60,
@@ -284,5 +285,45 @@ final class BodyBatteryCalculatorTests: XCTestCase {
 
         XCTAssertGreaterThan(personalized.dailyDrainScore, generic.dailyDrainScore)
         XCTAssertLessThan(personalized.level, generic.level)
+    }
+
+    func testFatigueLoadLowersBatteryAfterSeveralHardDays() {
+        let recoveredBaseline = BodyBatteryBaseline(
+            restingHeartRate: 58,
+            hrvSDNNMilliseconds: 54,
+            sleepQualityScore: 78,
+            sleepMinutes: 480,
+            stepsToday: 7_000,
+            activeEnergyKilocaloriesToday: 380,
+            fatigueLoadScore: 12
+        )
+        let loadedBaseline = BodyBatteryBaseline(
+            restingHeartRate: 58,
+            hrvSDNNMilliseconds: 54,
+            sleepQualityScore: 78,
+            sleepMinutes: 480,
+            stepsToday: 7_000,
+            activeEnergyKilocaloriesToday: 380,
+            fatigueLoadScore: 82
+        )
+        let input = BodyBatteryInput(
+            restingHeartRate: 58,
+            averageHeartRate2h: 66,
+            hrvSDNNMilliseconds: 53,
+            sleepMinutes24h: 470,
+            deepSleepMinutes24h: 80,
+            remSleepMinutes24h: 92,
+            awakeMinutesDuringSleep24h: 28,
+            awakeMinutesToday: 520,
+            stepsToday: 5_200,
+            activeEnergyKilocaloriesToday: 260,
+            basalEnergyKilocaloriesToday: 900
+        )
+
+        let recovered = BodyBatteryCalculator.summarize(input, baseline: recoveredBaseline)
+        let loaded = BodyBatteryCalculator.summarize(input, baseline: loadedBaseline)
+
+        XCTAssertEqual(loaded.fatigueLoadScore, 82)
+        XCTAssertLessThanOrEqual(loaded.level, recovered.level - 18)
     }
 }
