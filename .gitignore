@@ -1,0 +1,26 @@
+# Xcode build output
+DerivedData/
+build/
+*.xcresult
+
+# User-local Xcode state
+*.xcuserstate
+*.xcscmblueprint
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Signing and local secrets
+*.mobileprovision
+*.p12
+*.cer
+*.key
+*.pem

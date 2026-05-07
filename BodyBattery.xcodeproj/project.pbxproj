@@ -1,0 +1,688 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* BodyBatteryiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* BodyBatteryiOSApp.swift */; };
+		100000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* ContentView.swift */; };
+		100000000000000000000003 /* BatteryHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* BatteryHistoryStore.swift */; };
+		100000000000000000000004 /* iPhoneConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* iPhoneConnectivityManager.swift */; };
+		100000000000000000000005 /* BodyBatteryWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* BodyBatteryWatchApp.swift */; };
+		100000000000000000000006 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* TodayView.swift */; };
+		100000000000000000000007 /* HealthDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000007 /* HealthDataManager.swift */; };
+		100000000000000000000008 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* WatchConnectivityManager.swift */; };
+		100000000000000000000009 /* BodyBatteryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000009 /* BodyBatteryCalculator.swift */; };
+		10000000000000000000000A /* BodyBatteryCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000A /* BodyBatteryCalculatorTests.swift */; };
+		10000000000000000000000D /* BodyBatteryShared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000B /* BodyBatteryShared.framework */; };
+		100000000000000000000010 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000E /* WatchConnectivity.framework */; };
+		100000000000000000000011 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000E /* WatchConnectivity.framework */; };
+		100000000000000000000012 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000F /* HealthKit.framework */; };
+		100000000000000000000013 /* BodyBatteryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000009 /* BodyBatteryCalculator.swift */; };
+		100000000000000000000014 /* BodyBatteryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000009 /* BodyBatteryCalculator.swift */; };
+		100000000000000000000015 /* BodyBatteryWatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000D /* BodyBatteryWatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		100000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000011 /* Assets.xcassets */; };
+		100000000000000000000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000012 /* Assets.xcassets */; };
+		100000000000000000000018 /* OnboardingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000013 /* OnboardingStore.swift */; };
+		100000000000000000000019 /* iPhoneHealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000014 /* iPhoneHealthKitManager.swift */; };
+		10000000000000000000001A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000015 /* OnboardingView.swift */; };
+		10000000000000000000001B /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000F /* HealthKit.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		300000000000000000000003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 400000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 500000000000000000000003;
+			remoteInfo = BodyBatteryShared;
+		};
+		300000000000000000000004 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 400000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 500000000000000000000002;
+			remoteInfo = BodyBatteryWatchApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		600000000000000000000001 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000002 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000003 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				100000000000000000000015 /* BodyBatteryWatchApp.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* BodyBatteryiOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryiOSApp.swift; sourceTree = "<group>"; };
+		200000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		200000000000000000000003 /* BatteryHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHistoryStore.swift; sourceTree = "<group>"; };
+		200000000000000000000004 /* iPhoneConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneConnectivityManager.swift; sourceTree = "<group>"; };
+		200000000000000000000005 /* BodyBatteryWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryWatchApp.swift; sourceTree = "<group>"; };
+		200000000000000000000006 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		200000000000000000000007 /* HealthDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataManager.swift; sourceTree = "<group>"; };
+		200000000000000000000008 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		200000000000000000000009 /* BodyBatteryCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryCalculator.swift; sourceTree = "<group>"; };
+		20000000000000000000000A /* BodyBatteryCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryCalculatorTests.swift; sourceTree = "<group>"; };
+		20000000000000000000000B /* BodyBatteryShared.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BodyBatteryShared.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		20000000000000000000000C /* BodyBatteryiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BodyBatteryiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		20000000000000000000000D /* BodyBatteryWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BodyBatteryWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		20000000000000000000000E /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
+		20000000000000000000000F /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		200000000000000000000010 /* BodyBatteryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BodyBatteryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		200000000000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		200000000000000000000012 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		200000000000000000000013 /* OnboardingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStore.swift; sourceTree = "<group>"; };
+		200000000000000000000014 /* iPhoneHealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneHealthKitManager.swift; sourceTree = "<group>"; };
+		200000000000000000000015 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		700000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000010 /* WatchConnectivity.framework in Frameworks */,
+				10000000000000000000001B /* HealthKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		700000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000011 /* WatchConnectivity.framework in Frameworks */,
+				100000000000000000000012 /* HealthKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		700000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		700000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000D /* BodyBatteryShared.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		800000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				800000000000000000000002 /* iOS App */,
+				800000000000000000000003 /* Watch App */,
+				800000000000000000000004 /* Shared */,
+				800000000000000000000005 /* BodyBatteryTests */,
+				800000000000000000000006 /* Frameworks */,
+				800000000000000000000007 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		800000000000000000000002 /* iOS App */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000001 /* BodyBatteryiOSApp.swift */,
+				200000000000000000000002 /* ContentView.swift */,
+				200000000000000000000003 /* BatteryHistoryStore.swift */,
+				200000000000000000000004 /* iPhoneConnectivityManager.swift */,
+				200000000000000000000013 /* OnboardingStore.swift */,
+				200000000000000000000014 /* iPhoneHealthKitManager.swift */,
+				200000000000000000000015 /* OnboardingView.swift */,
+				200000000000000000000011 /* Assets.xcassets */,
+			);
+			path = "iOS App";
+			sourceTree = "<group>";
+		};
+		800000000000000000000003 /* Watch App */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000005 /* BodyBatteryWatchApp.swift */,
+				200000000000000000000006 /* TodayView.swift */,
+				200000000000000000000007 /* HealthDataManager.swift */,
+				200000000000000000000008 /* WatchConnectivityManager.swift */,
+				200000000000000000000012 /* Assets.xcassets */,
+			);
+			path = "Watch App";
+			sourceTree = "<group>";
+		};
+		800000000000000000000004 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000009 /* BodyBatteryCalculator.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		800000000000000000000005 /* BodyBatteryTests */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000A /* BodyBatteryCalculatorTests.swift */,
+			);
+			path = BodyBatteryTests;
+			sourceTree = "<group>";
+		};
+		800000000000000000000006 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000E /* WatchConnectivity.framework */,
+				20000000000000000000000F /* HealthKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		800000000000000000000007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000C /* BodyBatteryiOS.app */,
+				20000000000000000000000D /* BodyBatteryWatchApp.app */,
+				20000000000000000000000B /* BodyBatteryShared.framework */,
+				200000000000000000000010 /* BodyBatteryTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000001 /* BodyBatteryiOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900000000000000000000002 /* Build configuration list for PBXNativeTarget "BodyBatteryiOS" */;
+			buildPhases = (
+				A00000000000000000000001 /* Sources */,
+				700000000000000000000001 /* Frameworks */,
+				C00000000000000000000001 /* Resources */,
+				600000000000000000000001 /* Embed Frameworks */,
+				600000000000000000000003 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B00000000000000000000004 /* PBXTargetDependency */,
+			);
+			name = BodyBatteryiOS;
+			productName = BodyBatteryiOS;
+			productReference = 20000000000000000000000C /* BodyBatteryiOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		500000000000000000000002 /* BodyBatteryWatchApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900000000000000000000003 /* Build configuration list for PBXNativeTarget "BodyBatteryWatchApp" */;
+			buildPhases = (
+				A00000000000000000000002 /* Sources */,
+				700000000000000000000002 /* Frameworks */,
+				C00000000000000000000002 /* Resources */,
+				600000000000000000000002 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BodyBatteryWatchApp;
+			productName = BodyBatteryWatchApp;
+			productReference = 20000000000000000000000D /* BodyBatteryWatchApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		500000000000000000000003 /* BodyBatteryShared */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900000000000000000000004 /* Build configuration list for PBXNativeTarget "BodyBatteryShared" */;
+			buildPhases = (
+				A00000000000000000000003 /* Sources */,
+				700000000000000000000003 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BodyBatteryShared;
+			productName = BodyBatteryShared;
+			productReference = 20000000000000000000000B /* BodyBatteryShared.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		500000000000000000000004 /* BodyBatteryTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900000000000000000000005 /* Build configuration list for PBXNativeTarget "BodyBatteryTests" */;
+			buildPhases = (
+				A00000000000000000000004 /* Sources */,
+				700000000000000000000004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B00000000000000000000003 /* PBXTargetDependency */,
+			);
+			name = BodyBatteryTests;
+			productName = BodyBatteryTests;
+			productReference = 200000000000000000000010 /* BodyBatteryTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		400000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					500000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					500000000000000000000002 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					500000000000000000000003 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					500000000000000000000004 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 900000000000000000000001 /* Build configuration list for PBXProject "BodyBattery" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 800000000000000000000001;
+			productRefGroup = 800000000000000000000007 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				500000000000000000000001 /* BodyBatteryiOS */,
+				500000000000000000000002 /* BodyBatteryWatchApp */,
+				500000000000000000000003 /* BodyBatteryShared */,
+				500000000000000000000004 /* BodyBatteryTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C00000000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000016 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C00000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000017 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000001 /* BodyBatteryiOSApp.swift in Sources */,
+				100000000000000000000002 /* ContentView.swift in Sources */,
+				100000000000000000000003 /* BatteryHistoryStore.swift in Sources */,
+				100000000000000000000004 /* iPhoneConnectivityManager.swift in Sources */,
+				100000000000000000000018 /* OnboardingStore.swift in Sources */,
+				100000000000000000000019 /* iPhoneHealthKitManager.swift in Sources */,
+				10000000000000000000001A /* OnboardingView.swift in Sources */,
+				100000000000000000000013 /* BodyBatteryCalculator.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000005 /* BodyBatteryWatchApp.swift in Sources */,
+				100000000000000000000006 /* TodayView.swift in Sources */,
+				100000000000000000000007 /* HealthDataManager.swift in Sources */,
+				100000000000000000000008 /* WatchConnectivityManager.swift in Sources */,
+				100000000000000000000014 /* BodyBatteryCalculator.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000009 /* BodyBatteryCalculator.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000A /* BodyBatteryCalculatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B00000000000000000000003 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 500000000000000000000003 /* BodyBatteryShared */;
+			targetProxy = 300000000000000000000003 /* PBXContainerItemProxy */;
+		};
+		B00000000000000000000004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 500000000000000000000002 /* BodyBatteryWatchApp */;
+			targetProxy = 300000000000000000000004 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		C000000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		C000000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+		C000000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "iOS App/BodyBatteryiOS.entitlements";
+				DEVELOPMENT_TEAM = 8XPW8Z2V68;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "iOS App/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiajia.BodyBattery;
+				PRODUCT_NAME = BodyBatteryiOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C000000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "iOS App/BodyBatteryiOS.entitlements";
+				DEVELOPMENT_TEAM = 8XPW8Z2V68;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "iOS App/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiajia.BodyBattery;
+				PRODUCT_NAME = BodyBatteryiOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		C000000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Watch App/BodyBatteryWatch.entitlements";
+				DEVELOPMENT_TEAM = 8XPW8Z2V68;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Watch App/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiajia.BodyBattery.watchkitapp;
+				PRODUCT_NAME = BodyBatteryWatchApp;
+				SDKROOT = watchos;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		C000000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "Watch App/BodyBatteryWatch.entitlements";
+				DEVELOPMENT_TEAM = 8XPW8Z2V68;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Watch App/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiajia.BodyBattery.watchkitapp;
+				PRODUCT_NAME = BodyBatteryWatchApp;
+				SDKROOT = watchos;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+		C000000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = 8XPW8Z2V68;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
+				MACH_O_TYPE = mh_dylib;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiajia.BodyBattery.shared;
+				PRODUCT_MODULE_NAME = BodyBatteryShared;
+				PRODUCT_NAME = BodyBatteryShared;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C000000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = 8XPW8Z2V68;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_DYLIB_INSTALL_NAME = "@rpath/$(EXECUTABLE_PATH)";
+				MACH_O_TYPE = mh_dylib;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiajia.BodyBattery.shared;
+				PRODUCT_MODULE_NAME = BodyBatteryShared;
+				PRODUCT_NAME = BodyBatteryShared;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C000000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BodyBatteryTests;
+				PRODUCT_NAME = BodyBatteryTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C00000000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.BodyBatteryTests;
+				PRODUCT_NAME = BodyBatteryTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		900000000000000000000001 /* Build configuration list for PBXProject "BodyBattery" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C000000000000000000000001 /* Debug */,
+				C000000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		900000000000000000000002 /* Build configuration list for PBXNativeTarget "BodyBatteryiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C000000000000000000000003 /* Debug */,
+				C000000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		900000000000000000000003 /* Build configuration list for PBXNativeTarget "BodyBatteryWatchApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C000000000000000000000005 /* Debug */,
+				C000000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		900000000000000000000004 /* Build configuration list for PBXNativeTarget "BodyBatteryShared" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C000000000000000000000007 /* Debug */,
+				C000000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		900000000000000000000005 /* Build configuration list for PBXNativeTarget "BodyBatteryTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C000000000000000000000009 /* Debug */,
+				C00000000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 400000000000000000000001 /* Project object */;
+}
