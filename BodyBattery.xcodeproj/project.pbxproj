@@ -13,7 +13,6 @@
 		100000000000000000000004 /* iPhoneConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* iPhoneConnectivityManager.swift */; };
 		100000000000000000000005 /* BodyBatteryWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* BodyBatteryWatchApp.swift */; };
 		100000000000000000000006 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* TodayView.swift */; };
-		100000000000000000000007 /* HealthDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000007 /* HealthDataManager.swift */; };
 		100000000000000000000008 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* WatchConnectivityManager.swift */; };
 		100000000000000000000009 /* BodyBatteryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000009 /* BodyBatteryCalculator.swift */; };
 		10000000000000000000000A /* BodyBatteryCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000A /* BodyBatteryCalculatorTests.swift */; };
@@ -30,6 +29,8 @@
 		100000000000000000000019 /* iPhoneHealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000014 /* iPhoneHealthKitManager.swift */; };
 		10000000000000000000001A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000015 /* OnboardingView.swift */; };
 		10000000000000000000001B /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000F /* HealthKit.framework */; };
+		10000000000000000000001C /* BatterySnapshotCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000016 /* BatterySnapshotCodec.swift */; };
+		10000000000000000000001D /* BodyBatterySerializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000017 /* BodyBatterySerializationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,7 +91,6 @@
 		200000000000000000000004 /* iPhoneConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneConnectivityManager.swift; sourceTree = "<group>"; };
 		200000000000000000000005 /* BodyBatteryWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryWatchApp.swift; sourceTree = "<group>"; };
 		200000000000000000000006 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
-		200000000000000000000007 /* HealthDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataManager.swift; sourceTree = "<group>"; };
 		200000000000000000000008 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
 		200000000000000000000009 /* BodyBatteryCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryCalculator.swift; sourceTree = "<group>"; };
 		20000000000000000000000A /* BodyBatteryCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatteryCalculatorTests.swift; sourceTree = "<group>"; };
@@ -105,6 +105,8 @@
 		200000000000000000000013 /* OnboardingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStore.swift; sourceTree = "<group>"; };
 		200000000000000000000014 /* iPhoneHealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneHealthKitManager.swift; sourceTree = "<group>"; };
 		200000000000000000000015 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		200000000000000000000016 /* BatterySnapshotCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatterySnapshotCodec.swift; sourceTree = "<group>"; };
+		200000000000000000000017 /* BodyBatterySerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyBatterySerializationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,7 +178,6 @@
 			children = (
 				200000000000000000000005 /* BodyBatteryWatchApp.swift */,
 				200000000000000000000006 /* TodayView.swift */,
-				200000000000000000000007 /* HealthDataManager.swift */,
 				200000000000000000000008 /* WatchConnectivityManager.swift */,
 				200000000000000000000012 /* Assets.xcassets */,
 			);
@@ -187,6 +188,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000009 /* BodyBatteryCalculator.swift */,
+				200000000000000000000016 /* BatterySnapshotCodec.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -195,6 +197,7 @@
 			isa = PBXGroup;
 			children = (
 				20000000000000000000000A /* BodyBatteryCalculatorTests.swift */,
+				200000000000000000000017 /* BodyBatterySerializationTests.swift */,
 			);
 			path = BodyBatteryTests;
 			sourceTree = "<group>";
@@ -379,7 +382,6 @@
 			files = (
 				100000000000000000000005 /* BodyBatteryWatchApp.swift in Sources */,
 				100000000000000000000006 /* TodayView.swift in Sources */,
-				100000000000000000000007 /* HealthDataManager.swift in Sources */,
 				100000000000000000000008 /* WatchConnectivityManager.swift in Sources */,
 				100000000000000000000014 /* BodyBatteryCalculator.swift in Sources */,
 			);
@@ -390,6 +392,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000009 /* BodyBatteryCalculator.swift in Sources */,
+				10000000000000000000001C /* BatterySnapshotCodec.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -398,6 +401,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				10000000000000000000000A /* BodyBatteryCalculatorTests.swift in Sources */,
+				10000000000000000000001D /* BodyBatterySerializationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

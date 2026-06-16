@@ -29,7 +29,7 @@ final class iPhoneConnectivityManager: NSObject, ObservableObject {
         statusText = source
 
         guard WCSession.isSupported(), WCSession.default.activationState == .activated else { return }
-        try? WCSession.default.updateApplicationContext(Self.payload(for: nextSummary))
+        try? WCSession.default.updateApplicationContext(BatterySnapshotCodec.payload(for: nextSummary))
     }
 
     func sendSyncRequest() {
@@ -50,11 +50,11 @@ final class iPhoneConnectivityManager: NSObject, ObservableObject {
             return
         }
         statusText = "正在发送最新快照..."
-        let payload = summary.map { Self.payload(for: $0) } ?? ["requestPhoneSnapshot": true]
+        let payload = summary.map { BatterySnapshotCodec.payload(for: $0) } ?? [BatterySnapshotCodec.requestPhoneSnapshotKey: true]
         guard WCSession.default.isReachable else {
             statusText = "手表未前台，已保存最新快照"
             if let summary {
-                try? WCSession.default.updateApplicationContext(Self.payload(for: summary))
+                try? WCSession.default.updateApplicationContext(BatterySnapshotCodec.payload(for: summary))
             }
             return
         }
@@ -70,50 +70,10 @@ final class iPhoneConnectivityManager: NSObject, ObservableObject {
     }
 
     private func apply(message: [String: Any], source: String) {
-        guard let level = message["batteryLevel"] as? Int else { return }
-        let nextSummary = BodyBatterySummary(
-            level: level,
-            stressScore: message["stressScore"] as? Int ?? 0,
-            recoveryScore: message["recoveryScore"] as? Int ?? 0,
-            drainScore: message["drainScore"] as? Int ?? 0,
-            dailyDrainScore: message["dailyDrainScore"] as? Int ?? 0,
-            fatigueLoadScore: message["fatigueLoadScore"] as? Int ?? 0,
-            sleepQualityScore: message["sleepQualityScore"] as? Int ?? 0,
-            hrvSDNNMilliseconds: message["hrvSDNNMilliseconds"] as? Int,
-            steps2h: message["steps2h"] as? Int ?? 0,
-            activeEnergyKilocalories2h: message["activeEnergyKilocalories2h"] as? Int ?? 0,
-            basalEnergyKilocalories2h: message["basalEnergyKilocalories2h"] as? Int ?? 0,
-            awakeMinutesToday: message["awakeMinutesToday"] as? Int ?? 0,
-            stepsToday: message["stepsToday"] as? Int ?? 0,
-            activeEnergyKilocaloriesToday: message["activeEnergyKilocaloriesToday"] as? Int ?? 0,
-            basalEnergyKilocaloriesToday: message["basalEnergyKilocaloriesToday"] as? Int ?? 0
-        )
+        guard let nextSummary = BatterySnapshotCodec.summary(from: message) else { return }
         summary = nextSummary
         batteryLevel = nextSummary.level
         statusText = source
-    }
-
-    private static func payload(for summary: BodyBatterySummary) -> [String: Any] {
-        var payload: [String: Any] = [
-            "batteryLevel": summary.level,
-            "stressScore": summary.stressScore,
-            "recoveryScore": summary.recoveryScore,
-            "drainScore": summary.drainScore,
-            "dailyDrainScore": summary.dailyDrainScore,
-            "fatigueLoadScore": summary.fatigueLoadScore,
-            "sleepQualityScore": summary.sleepQualityScore,
-            "steps2h": summary.steps2h,
-            "activeEnergyKilocalories2h": summary.activeEnergyKilocalories2h,
-            "basalEnergyKilocalories2h": summary.basalEnergyKilocalories2h,
-            "awakeMinutesToday": summary.awakeMinutesToday,
-            "stepsToday": summary.stepsToday,
-            "activeEnergyKilocaloriesToday": summary.activeEnergyKilocaloriesToday,
-            "basalEnergyKilocaloriesToday": summary.basalEnergyKilocaloriesToday
-        ]
-        if let hrv = summary.hrvSDNNMilliseconds {
-            payload["hrvSDNNMilliseconds"] = hrv
-        }
-        return payload
     }
 
     nonisolated private static func shortError(_ error: Error) -> String {
@@ -149,11 +109,11 @@ extension iPhoneConnectivityManager: WCSessionDelegate {
 
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
         Task { @MainActor in
-            if message["requestPhoneSnapshot"] as? Bool == true, let summary = self.summary {
-                replyHandler(Self.payload(for: summary))
+            if message[BatterySnapshotCodec.requestPhoneSnapshotKey] as? Bool == true, let summary = self.summary {
+                replyHandler(BatterySnapshotCodec.payload(for: summary))
             } else {
                 self.apply(message: message, source: "收到手表更新")
-                replyHandler(self.summary.map { Self.payload(for: $0) } ?? [:])
+                replyHandler(self.summary.map { BatterySnapshotCodec.payload(for: $0) } ?? [:])
             }
         }
     }

@@ -99,6 +99,10 @@ final class iPhoneHealthKitManager: ObservableObject {
         let currentActiveEnergyToday = await activeEnergyToday
         let currentBasalEnergyToday = await basalEnergyToday
         let currentBaseline = await baseline
+        // 清醒时长从"最近一次起床"算起，而不是从午夜。没有可用睡眠结束时间时回退到
+        // 当天 0 点，这与 Watch 端 todayDrainStart 的口径一致，避免下午刷新时
+        // awakeMinutesToday 被算成 14+ 小时而把 dailyDrainScore 严重抬高。
+        let awakeSince = awakeMinutesStart(now: now, todayStart: todayStart, sleepEnd: currentSleep.latestEndDate)
         let currentInput = BodyBatteryInput(
             restingHeartRate: currentRestingHeartRate.value,
             averageHeartRate2h: currentHeartRate.value,
@@ -110,7 +114,7 @@ final class iPhoneHealthKitManager: ObservableObject {
             steps2h: currentSteps2h.value ?? 0,
             activeEnergyKilocalories2h: currentActiveEnergy2h.value ?? 0,
             basalEnergyKilocalories2h: currentBasalEnergy2h.value ?? 0,
-            awakeMinutesToday: max(0, Int(now.timeIntervalSince(todayStart) / 60)),
+            awakeMinutesToday: max(0, Int(now.timeIntervalSince(awakeSince) / 60)),
             stepsToday: currentStepsToday.value ?? 0,
             activeEnergyKilocaloriesToday: currentActiveEnergyToday.value ?? 0,
             basalEnergyKilocaloriesToday: currentBasalEnergyToday.value ?? 0
@@ -119,9 +123,35 @@ final class iPhoneHealthKitManager: ObservableObject {
         let latestSummary = BodyBatteryCalculator.summarize(currentInput, baseline: currentBaseline)
         summary = latestSummary
         lastRefreshDate = now
-        healthStatusText = "Apple 健康已刷新"
+        healthStatusText = healthStatus(for: currentInput)
         return latestSummary
         #endif
+    }
+
+    /// 根据本次读到的信号给出更友好的状态文案。
+    /// 全部核心信号为空时，多半是未授权或健康数据为空，需要引导用户；
+    /// 否则给出已刷新的提示。
+    private func healthStatus(for input: BodyBatteryInput) -> String {
+        let hasAnySignal = input.restingHeartRate != nil
+            || input.averageHeartRate2h != nil
+            || input.hrvSDNNMilliseconds != nil
+            || input.sleepMinutes24h > 0
+            || input.steps2h > 0
+            || input.stepsToday > 0
+            || input.activeEnergyKilocaloriesToday > 0
+        if hasAnySignal {
+            return "Apple 健康已刷新"
+        }
+        return "未读到健康数据，请在系统设置中允许 BodyBattery 读取健康数据"
+    }
+
+    /// 计算今日清醒时长的起点：优先用最近一次睡眠结束（起床）时间，
+    /// 条件是该时间在今天范围内且早于当前；否则回退到当天 0 点。
+    private func awakeMinutesStart(now: Date, todayStart: Date, sleepEnd: Date?) -> Date {
+        guard let sleepEnd, sleepEnd >= todayStart, sleepEnd <= now else {
+            return todayStart
+        }
+        return sleepEnd
     }
 
     private func fetchPersonalBaseline(until todayStart: Date) async -> BodyBatteryBaseline? {
@@ -170,25 +200,45 @@ final class iPhoneHealthKitManager: ObservableObject {
 
     private func fetchWeightedFatigueLoad(until todayStart: Date) async -> Int {
         let weights = [30, 24, 18, 12, 8, 5, 3]
-        var weightedSteps = 0
-        var weightedActiveEnergy = 0
+        let calendar = Calendar.current
 
-        for index in weights.indices {
-            guard let dayStart = Calendar.current.date(byAdding: .day, value: -(index + 1), to: todayStart),
-                  let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart) else { continue }
-
-            async let steps = fetchQuantityTotal(.stepCount, unit: .count(), since: dayStart, until: dayEnd)
-            async let activeEnergy = fetchQuantityTotal(.activeEnergyBurned, unit: .kilocalorie(), since: dayStart, until: dayEnd)
-            let daySteps = await steps
-            let dayActiveEnergy = await activeEnergy
-            let weight = weights[index]
-            weightedSteps += (daySteps.value ?? 0) * weight / 100
-            weightedActiveEnergy += (dayActiveEnergy.value ?? 0) * weight / 100
+        // 预先算好每天的区间，再用 TaskGroup 并发查询所有天的步数和活动能量。
+        // 旧实现在 for 循环里立即 await，7 天 × 2 查询变成 14 次串行 HealthKit 访问；
+        // 改成并发后总耗时约为单天的 1 倍而非 14 倍。
+        struct DayRange {
+            let index: Int
+            let start: Date
+            let end: Date
+        }
+        let ranges: [DayRange] = weights.indices.compactMap { index in
+            guard let dayStart = calendar.date(byAdding: .day, value: -(index + 1), to: todayStart),
+                  let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else { return nil }
+            return DayRange(index: index, start: dayStart, end: dayEnd)
         }
 
-        let stepLoad = min(45, weightedSteps / 220)
-        let energyLoad = min(55, weightedActiveEnergy / 12)
-        return min(100, max(0, stepLoad + energyLoad))
+        return await withTaskGroup(of: (Int, Int, Int).self) { [weak self] group in
+            guard let self else { return 0 }
+            for range in ranges {
+                group.addTask {
+                    async let steps = self.fetchQuantityTotal(.stepCount, unit: .count(), since: range.start, until: range.end)
+                    async let activeEnergy = self.fetchQuantityTotal(.activeEnergyBurned, unit: .kilocalorie(), since: range.start, until: range.end)
+                    let daySteps = await steps
+                    let dayActiveEnergy = await activeEnergy
+                    return (range.index, daySteps.value ?? 0, dayActiveEnergy.value ?? 0)
+                }
+            }
+            var weightedSteps = 0
+            var weightedActiveEnergy = 0
+            for await (index, daySteps, dayActiveEnergy) in group {
+                let weight = weights[index]
+                weightedSteps += daySteps * weight / 100
+                weightedActiveEnergy += dayActiveEnergy * weight / 100
+            }
+
+            let stepLoad = min(45, weightedSteps / 220)
+            let energyLoad = min(55, weightedActiveEnergy / 12)
+            return min(100, max(0, stepLoad + energyLoad))
+        }
     }
 
     private func fetchLatestQuantity(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, since start: Date, until end: Date) async -> HealthQuantityResult {
@@ -280,14 +330,17 @@ final class iPhoneHealthKitManager: ObservableObject {
                         result.minutes += minutes
                         result.deepMinutes += minutes
                         sleepDays.insert(calendar.startOfDay(for: sample.endDate))
+                        result.latestEndDate = max(result.latestEndDate, sample.endDate)
                     case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
                         result.minutes += minutes
                         result.remMinutes += minutes
                         sleepDays.insert(calendar.startOfDay(for: sample.endDate))
+                        result.latestEndDate = max(result.latestEndDate, sample.endDate)
                     case HKCategoryValueSleepAnalysis.asleepCore.rawValue,
                          HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue:
                         result.minutes += minutes
                         sleepDays.insert(calendar.startOfDay(for: sample.endDate))
+                        result.latestEndDate = max(result.latestEndDate, sample.endDate)
                     case HKCategoryValueSleepAnalysis.awake.rawValue:
                         result.awakeMinutes += minutes
                     default:
@@ -374,6 +427,9 @@ private struct HealthSleepResult {
     var remMinutes = 0
     var awakeMinutes = 0
     var daysWithSleep = 0
+    /// 最近一次睡眠样本的结束时间，用于把"今日清醒时长"从起床时刻而非午夜起算，
+    /// 与 Watch 端口径保持一致，避免下午刷新时 dailyDrain 被严重高估。
+    var latestEndDate: Date?
     var errorDescription: String?
 }
 

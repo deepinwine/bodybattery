@@ -13,8 +13,8 @@ struct ContentView: View {
                     TodayDashboardView()
                         .tabItem { Label("今日", systemImage: "battery.100percent") }
 
-                    WorkoutCalendarView()
-                        .tabItem { Label("锻炼", systemImage: "figure.run") }
+                    DailyActivityView()
+                        .tabItem { Label("活动", systemImage: "figure.run") }
 
                     TrendDashboardView()
                         .tabItem { Label("趋势", systemImage: "chart.xyaxis.line") }
@@ -87,14 +87,19 @@ private struct TodayDashboardView: View {
             }
         }
         .task {
+            // 进入今日页时刷新一次。即便处于冷却期 refreshSummary 返回 nil，
+            // 只要本地已有上一次的 summary，也要把它发布给 Watch，
+            // 否则 Watch 在冷却窗口内可能一直拿不到首次快照。
             if let summary = await healthKitManager.refreshSummary(force: false) {
                 connectivity.publishLocalSummary(summary, source: "Apple 健康快照")
+            } else if let existing = healthKitManager.summary {
+                connectivity.publishLocalSummary(existing, source: "已显示最近健康快照")
             }
         }
     }
 }
 
-private struct WorkoutCalendarView: View {
+private struct DailyActivityView: View {
     @EnvironmentObject private var historyStore: BatteryHistoryStore
 
     private let columns = [
@@ -104,7 +109,7 @@ private struct WorkoutCalendarView: View {
     var body: some View {
         AppScreen {
             VStack(alignment: .leading, spacing: 16) {
-                HeaderView(title: "锻炼", subtitle: "每日三环完成情况")
+                HeaderView(title: "活动", subtitle: "每日步数、活动能量与电量")
 
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(historyStore.dailySummaries(lastDays: 30)) { day in

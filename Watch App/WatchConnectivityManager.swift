@@ -1,17 +1,22 @@
 import Foundation
 import WatchConnectivity
 
+/// Watch 端 WatchConnectivity 管理器。
+///
+/// Watch 端不再读取 HealthKit，只接收 iPhone 发来的轻量身体电量快照并展示。
+/// 这里只保留"接收应用上下文 / 应答 sendMessage / 主动请求 iPhone 快照"三条路径，
+/// 不维护发送队列、不缓存待发摘要——Watch 不产生摘要。
 @MainActor
 final class WatchConnectivityManager: NSObject, ObservableObject {
-    private var refreshHandler: (() async -> Void)?
     @Published private(set) var latestSummary: BodyBatterySummary = .full
+    @Published private(set) var hasReceivedSnapshot = false
     @Published private(set) var statusText = "等待 iPhone 快照"
-    private var lastSentSummary: BodyBatterySummary?
-    private var cachedSummary: BodyBatterySummary?
 
-    func configure(refreshHandler: @escaping () async -> Void) {
-        self.refreshHandler = refreshHandler
-        guard WCSession.isSupported() else { return }
+    func configure() {
+        guard WCSession.isSupported() else {
+            statusText = "当前设备不支持通信"
+            return
+        }
         WCSession.default.delegate = self
         WCSession.default.activate()
         if !WCSession.default.receivedApplicationContext.isEmpty {
@@ -19,50 +24,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         }
     }
 
-    func sendSummaryIfNeeded(_ summary: BodyBatterySummary) {
-        sendSummary(summary, force: false)
-    }
-
-    func updateLatestSummary(_ summary: BodyBatterySummary) {
-        latestSummary = summary
-    }
-
-    func sendSummary(_ summary: BodyBatterySummary, force: Bool) {
-        latestSummary = summary
-        guard force || shouldSend(summary) else { return }
-        send(summary)
-    }
-
-    private func shouldSend(_ summary: BodyBatterySummary) -> Bool {
-        guard let previous = lastSentSummary else { return true }
-        return abs(previous.level - summary.level) > 1 ||
-            abs(previous.stressScore - summary.stressScore) > 1 ||
-            abs(previous.recoveryScore - summary.recoveryScore) > 1 ||
-            abs(previous.drainScore - summary.drainScore) > 1 ||
-            abs(previous.dailyDrainScore - summary.dailyDrainScore) > 1 ||
-            abs(previous.fatigueLoadScore - summary.fatigueLoadScore) > 1 ||
-            abs((previous.hrvSDNNMilliseconds ?? 0) - (summary.hrvSDNNMilliseconds ?? 0)) > 1
-    }
-
-    private func send(_ summary: BodyBatterySummary) {
-        let payload = Self.payload(for: summary)
-        // Watch -> iPhone 只发布最新快照，不主动 sendMessage。sendMessage 会要求两端建立
-        // 实时通信通道；对身体电量这种慢变量没有必要，真机长时间佩戴时应优先减少通信唤醒。
-        try? WCSession.default.updateApplicationContext(payload)
-        if WCSession.default.isReachable {
-            lastSentSummary = summary
-            cachedSummary = nil
-        } else {
-            // Keep only the latest summary. Avoiding a retry queue prevents repeated background wakeups.
-            cachedSummary = summary
-        }
-    }
-
-    private func flushCachedSummaryIfReachable() {
-        guard let cachedSummary, WCSession.default.isReachable else { return }
-        send(cachedSummary)
-    }
-
+    /// 请求 iPhone 立即回送最新快照。iPhone 必须 reachable 才能成功。
     func requestPhoneSnapshot() {
         guard WCSession.isSupported(), WCSession.default.activationState == .activated else {
             statusText = "通信未就绪"
@@ -73,7 +35,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             return
         }
         statusText = "正在请求 iPhone..."
-        WCSession.default.sendMessage(["requestPhoneSnapshot": true]) { [weak self] reply in
+        WCSession.default.sendMessage([BatterySnapshotCodec.requestPhoneSnapshotKey: true]) { [weak self] reply in
             Task { @MainActor in
                 self?.apply(message: reply, source: "iPhone 快照已同步")
             }
@@ -85,53 +47,15 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     }
 
     private func apply(message: [String: Any], source: String) {
-        guard let level = message["batteryLevel"] as? Int else { return }
-        latestSummary = BodyBatterySummary(
-            level: level,
-            stressScore: message["stressScore"] as? Int ?? 0,
-            recoveryScore: message["recoveryScore"] as? Int ?? 0,
-            drainScore: message["drainScore"] as? Int ?? 0,
-            dailyDrainScore: message["dailyDrainScore"] as? Int ?? 0,
-            fatigueLoadScore: message["fatigueLoadScore"] as? Int ?? 0,
-            sleepQualityScore: message["sleepQualityScore"] as? Int ?? 0,
-            hrvSDNNMilliseconds: message["hrvSDNNMilliseconds"] as? Int,
-            steps2h: message["steps2h"] as? Int ?? 0,
-            activeEnergyKilocalories2h: message["activeEnergyKilocalories2h"] as? Int ?? 0,
-            basalEnergyKilocalories2h: message["basalEnergyKilocalories2h"] as? Int ?? 0,
-            awakeMinutesToday: message["awakeMinutesToday"] as? Int ?? 0,
-            stepsToday: message["stepsToday"] as? Int ?? 0,
-            activeEnergyKilocaloriesToday: message["activeEnergyKilocaloriesToday"] as? Int ?? 0,
-            basalEnergyKilocaloriesToday: message["basalEnergyKilocaloriesToday"] as? Int ?? 0
-        )
+        guard let summary = BatterySnapshotCodec.summary(from: message) else { return }
+        latestSummary = summary
+        hasReceivedSnapshot = true
         statusText = source
     }
 
     nonisolated private static func shortError(_ error: Error) -> String {
         let nsError = error as NSError
         return "\(nsError.domain)#\(nsError.code)"
-    }
-
-    private static func payload(for summary: BodyBatterySummary) -> [String: Any] {
-        var payload: [String: Any] = [
-            "batteryLevel": summary.level,
-            "stressScore": summary.stressScore,
-            "recoveryScore": summary.recoveryScore,
-            "drainScore": summary.drainScore,
-            "dailyDrainScore": summary.dailyDrainScore,
-            "fatigueLoadScore": summary.fatigueLoadScore,
-            "sleepQualityScore": summary.sleepQualityScore,
-            "steps2h": summary.steps2h,
-            "activeEnergyKilocalories2h": summary.activeEnergyKilocalories2h,
-            "basalEnergyKilocalories2h": summary.basalEnergyKilocalories2h,
-            "awakeMinutesToday": summary.awakeMinutesToday,
-            "stepsToday": summary.stepsToday,
-            "activeEnergyKilocaloriesToday": summary.activeEnergyKilocaloriesToday,
-            "basalEnergyKilocaloriesToday": summary.basalEnergyKilocaloriesToday
-        ]
-        if let hrv = summary.hrvSDNNMilliseconds {
-            payload["hrvSDNNMilliseconds"] = hrv
-        }
-        return payload
     }
 }
 
@@ -145,18 +69,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
             } else {
                 self.statusText = activationState == .activated ? "等待 iPhone 快照" : "通信未就绪"
             }
-            self.flushCachedSummaryIfReachable()
         }
-    }
-
-    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
-        Task { @MainActor in self.flushCachedSummaryIfReachable() }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
         Task { @MainActor in
             self.apply(message: message, source: "收到 iPhone 快照")
-            replyHandler(Self.payload(for: self.latestSummary))
+            replyHandler(BatterySnapshotCodec.payload(for: self.latestSummary))
         }
     }
 
@@ -167,9 +86,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
-        // Intentionally ignore queued background requests. Older builds used transferUserInfo for
-        // sync fallbacks, and those items can be delivered later in batches. Replying to them would
-        // create avoidable background traffic and may wake the Watch app after the user stops using
-        // it. Foreground sendMessage still returns the latest snapshot immediately.
+        // 旧版本曾用 transferUserInfo 做后台同步兜底，这些条目可能延迟批量到达。
+        // 当前 Watch 只在前台接收快照，忽略历史 userInfo 避免无谓的后台唤醒。
     }
 }

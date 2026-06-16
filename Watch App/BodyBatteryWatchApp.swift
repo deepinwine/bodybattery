@@ -10,10 +10,9 @@ struct BodyBatteryWatchApp: App {
             TodayView()
                 .environmentObject(connectivity)
                 .task {
-                    connectivity.configure(refreshHandler: {
-                        // Watch 端现在只显示 iPhone 计算出的快照。这里不读 HealthKit，
-                        // 避免手表进程因为 iPhone 同步请求而执行健康数据库查询。
-                    })
+                    // Watch 端只显示 iPhone 计算出的快照，不读取 HealthKit，
+                    // 避免手表进程因同步请求而执行健康数据库查询。
+                    connectivity.configure()
                 }
         }
         .onChange(of: scenePhase) { _, phase in
