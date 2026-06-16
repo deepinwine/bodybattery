@@ -67,6 +67,13 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
     public var fatigueLoadScore: Int
     public var sleepQualityScore: Int
     public var hrvSDNNMilliseconds: Int?
+    /// Autonomic balance (0–100). 50 = balanced; below 50 = sympathetic dominance (draining);
+    /// above 50 = parasympathetic dominance (recovering). Derived from HRV vs personal baseline.
+    /// Nil when no HRV is available so the UI shows a placeholder instead of a fabricated value.
+    public var autonomicBalance: Int?
+    /// Human-readable HRV trend relative to the user's own baseline
+    /// ("高于平时" / "接近平时" / "低于平时"). Nil when HRV/baseline unavailable.
+    public var hrvTrend: String?
     public var steps2h: Int
     public var activeEnergyKilocalories2h: Int
     public var basalEnergyKilocalories2h: Int
@@ -84,6 +91,8 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
         fatigueLoadScore: Int = 0,
         sleepQualityScore: Int = 0,
         hrvSDNNMilliseconds: Int? = nil,
+        autonomicBalance: Int? = nil,
+        hrvTrend: String? = nil,
         steps2h: Int = 0,
         activeEnergyKilocalories2h: Int = 0,
         basalEnergyKilocalories2h: Int = 0,
@@ -100,6 +109,8 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
         self.fatigueLoadScore = Self.clamp(fatigueLoadScore)
         self.sleepQualityScore = Self.clamp(sleepQualityScore)
         self.hrvSDNNMilliseconds = hrvSDNNMilliseconds
+        self.autonomicBalance = autonomicBalance.map(Self.clamp)
+        self.hrvTrend = hrvTrend
         self.steps2h = max(0, steps2h)
         self.activeEnergyKilocalories2h = max(0, activeEnergyKilocalories2h)
         self.basalEnergyKilocalories2h = max(0, basalEnergyKilocalories2h)
@@ -126,6 +137,11 @@ public struct BodyBatterySummary: Codable, Equatable, Sendable {
 public struct BodyBatteryBaseline: Codable, Equatable, Sendable {
     public var restingHeartRate: Int?
     public var hrvSDNNMilliseconds: Int?
+    /// Day-to-day standard deviation of HRV (SDNN) over the rolling baseline window. Used to turn
+    /// the absolute HRV gap into a standardized z-score, so the same +10 ms means more for a person
+    /// whose HRV is stable than for one whose HRV swings widely. Firstbeat/HRV4Training both stress
+    /// comparing against personal variability rather than population thresholds.
+    public var hrvSDNNStandardDeviation: Int?
     public var sleepQualityScore: Int?
     public var sleepMinutes: Int?
     public var stepsToday: Int?
@@ -135,6 +151,7 @@ public struct BodyBatteryBaseline: Codable, Equatable, Sendable {
     public init(
         restingHeartRate: Int? = nil,
         hrvSDNNMilliseconds: Int? = nil,
+        hrvSDNNStandardDeviation: Int? = nil,
         sleepQualityScore: Int? = nil,
         sleepMinutes: Int? = nil,
         stepsToday: Int? = nil,
@@ -143,6 +160,7 @@ public struct BodyBatteryBaseline: Codable, Equatable, Sendable {
     ) {
         self.restingHeartRate = restingHeartRate
         self.hrvSDNNMilliseconds = hrvSDNNMilliseconds
+        self.hrvSDNNStandardDeviation = hrvSDNNStandardDeviation
         self.sleepQualityScore = sleepQualityScore
         self.sleepMinutes = sleepMinutes
         self.stepsToday = stepsToday
@@ -172,17 +190,35 @@ public enum BodyBatteryCalculator {
     /// - Constant-time arithmetic over scalar aggregates.
     /// - No loops except tiny fixed-band checks and no allocations beyond the returned value.
     /// - HealthKit sample iteration remains in the data manager, outside this pure function.
+    ///
+    /// Model (literature-informed):
+    /// The central signal is autonomic balance derived from HRV — Garmin/Firstbeat describe Body
+    /// Battery as continuously driven by HRV, heart rate and movement. We compute today's HRV as a
+    /// z-score against the user's own rolling baseline (HRV4Training / Firstbeat method), where a
+    /// positive z (HRV above your normal) reflects parasympathetic dominance = recovery, and a
+    /// negative z reflects sympathetic dominance = stress. That single balance axis drives the
+    /// stress/recovery split, the morning charge after sleep, and the acute HRV adjustment to the
+    /// final level — so the whole battery moves coherently with one validated physiological signal.
     public static func summarize(_ input: BodyBatteryInput, baseline: BodyBatteryBaseline? = nil) -> BodyBatterySummary {
         let sleepQualityScore = sleepQualityScore(for: input)
-        let stressScore = stressScore(for: input, sleepQualityScore: sleepQualityScore, baseline: baseline)
-        let recoveryScore = recoveryScore(for: input, sleepQualityScore: sleepQualityScore, baseline: baseline)
+        let balance = autonomicBalance(for: input, baseline: baseline)
+        let stressScore = stressScore(for: input, balance: balance, sleepQualityScore: sleepQualityScore, baseline: baseline)
+        let recoveryScore = recoveryScore(for: input, balance: balance, sleepQualityScore: sleepQualityScore, baseline: baseline)
         let drainScore = drainScore(for: input)
         let dailyDrainScore = dailyDrainScore(for: input, baseline: baseline)
         let fatigueLoadScore = baseline?.fatigueLoadScore ?? 0
         let fatiguePenalty = fatigueLoadScore / 3
-        let baselineLevel = baselineLevel(for: input, recoveryScore: recoveryScore, sleepQualityScore: sleepQualityScore, baseline: baseline)
-        let shortRecoveryBuffer = input.sleepMinutes24h > 0 ? min(10, recoveryScore / 3) : recoveryScore
-        let level = min(100, max(0, baselineLevel + shortRecoveryBuffer - stressScore - drainScore - dailyDrainScore - fatiguePenalty))
+        let level = level(
+            for: input,
+            balance: balance,
+            stressScore: stressScore,
+            drainScore: drainScore,
+            recoveryScore: recoveryScore,
+            sleepQualityScore: sleepQualityScore,
+            dailyDrainScore: dailyDrainScore,
+            fatiguePenalty: fatiguePenalty,
+            baseline: baseline
+        )
 
         return BodyBatterySummary(
             level: level,
@@ -193,6 +229,8 @@ public enum BodyBatteryCalculator {
             fatigueLoadScore: fatigueLoadScore,
             sleepQualityScore: sleepQualityScore,
             hrvSDNNMilliseconds: input.hrvSDNNMilliseconds,
+            autonomicBalance: balance.value,
+            hrvTrend: balance.trend,
             steps2h: input.steps2h,
             activeEnergyKilocalories2h: input.activeEnergyKilocalories2h,
             basalEnergyKilocalories2h: input.basalEnergyKilocalories2h,
@@ -203,62 +241,84 @@ public enum BodyBatteryCalculator {
         )
     }
 
-    /// Estimates the "morning charge" after sleep, then the model drains it through the day.
-    ///
-    /// With sleep data, recovery and sleep quality set the day's starting point. Without sleep data
-    /// we keep the legacy 100 baseline so first-run devices do not show an artificially low value.
-    private static func baselineLevel(for input: BodyBatteryInput, recoveryScore: Int, sleepQualityScore: Int, baseline: BodyBatteryBaseline?) -> Int {
-        guard input.sleepMinutes24h > 0 else { return 100 }
-        let sufficientSleepBuffer = sleepQualityScore >= 55 ? 6 : 0
-        var level = 55 + recoveryScore + sleepQualityScore / 3 + sufficientSleepBuffer
+    // MARK: - Autonomic balance (core HRV axis)
 
-        if let baseline {
-            if let usualSleep = baseline.sleepMinutes, usualSleep > 0 {
-                let sleepDelta = input.sleepMinutes24h - usualSleep
-                if sleepDelta >= 45 {
-                    level += 4
-                } else if sleepDelta <= -90 {
-                    level -= 10
-                } else if sleepDelta <= -45 {
-                    level -= 5
-                }
-            }
-            if let usualSleepQuality = baseline.sleepQualityScore {
-                let qualityDelta = sleepQualityScore - usualSleepQuality
-                if qualityDelta >= 12 {
-                    level += 5
-                } else if qualityDelta <= -20 {
-                    level -= 12
-                } else if qualityDelta <= -10 {
-                    level -= 6
-                }
-            }
+    /// Resolves today's HRV into an autonomic-balance score and a trend label.
+    ///
+    /// Uses the log-domain HRV transform (ln(SDNN)) that is standard in HRV research (HRV4Training
+    /// applies the same to RMSSD; SDNN tracks it closely). The today-vs-baseline gap becomes a
+    /// z-score when the baseline day-to-day standard deviation is available, otherwise a plain
+    /// log-ratio. The result is mapped so 50 is "balanced", rising above 50 is parasympathetic
+    /// (recovery) and falling below 50 is sympathetic (stress).
+    private static func autonomicBalance(for input: BodyBatteryInput, baseline: BodyBatteryBaseline?) -> (value: Int?, trend: String?) {
+        guard let hrv = input.hrvSDNNMilliseconds, hrv > 0 else { return (nil, nil) }
+        let lnToday = log(Double(hrv))
+
+        guard let baseline, let usualHRV = baseline.hrvSDNNMilliseconds, usualHRV > 0 else {
+            // No baseline yet: fall back to absolute HRV bands so first-run still works.
+            // Higher HRV → more parasympathetic → higher balance.
+            return (absoluteBalance(for: input.hrvSDNNMilliseconds ?? hrv), nil)
         }
 
-        return min(100, max(35, level))
+        let lnBaseline = log(Double(usualHRV))
+        let z: Double
+        if let sd = baseline.hrvSDNNStandardDeviation, sd > 0 {
+            // Log-domain standard deviation ≈ raw SD / baseline (first-order Taylor approximation
+            // of log variance). This turns the absolute HRV gap into a z-score standardized by the
+            // user's own day-to-day variability, so the same +10 ms weighs more for a stable person.
+            let logSD = Double(sd) / Double(usualHRV)
+            z = (lnToday - lnBaseline) / max(0.02, logSD)
+        } else {
+            // No dispersion available: use the raw log-ratio as a monotone proxy.
+            z = lnToday - lnBaseline
+        }
+
+        let clamped = max(-35.0, min(35.0, z * 15.0))
+        let value = Int((50.0 + clamped).rounded())
+        let trend: String
+        switch z {
+        case 0.5...:
+            trend = "高于平时"
+        case ...(-0.5):
+            trend = "低于平时"
+        default:
+            trend = "接近平时"
+        }
+        return (value, trend)
     }
 
-    private static func stressScore(for input: BodyBatteryInput, sleepQualityScore: Int, baseline: BodyBatteryBaseline?) -> Int {
+    /// Absolute (non-personalized) balance from raw HRV, used only before a baseline is learned.
+    private static func absoluteBalance(for hrv: Int) -> Int {
+        // Anchored so ~50 ms (a common healthy adult SDNN) maps to ~50 (balanced).
+        let score = 50 + (hrv - 50) / 2
+        return min(100, max(0, score))
+    }
+
+    // MARK: - Stress
+
+    /// Stress score now led by the autonomic-balance axis (the Garmin/Firstbeat core), with heart
+    /// rate deviation as a secondary contributor. A balance below 50 (sympathetic) raises stress;
+    /// a balance above 50 contributes little. Stress < 25 is treated as a "charging" state later.
+    private static func stressScore(for input: BodyBatteryInput, balance: (value: Int?, trend: String?), sleepQualityScore: Int, baseline: BodyBatteryBaseline?) -> Int {
         var score = 0
 
+        // Primary: sympathetic dominance from the HRV axis.
+        if let balanceValue = balance.value {
+            score += min(70, max(0, (50 - balanceValue) * 14 / 10))
+        } else if let hrv = input.hrvSDNNMilliseconds {
+            // No balance yet: absolute low HRV still signals stress.
+            if hrv < 30 { score += 20 }
+            else if hrv < 40 { score += 12 }
+            else if hrv >= 66 { score += 6 }
+        }
+
+        // Secondary: heart rate elevation above resting (acute load).
         if let resting = input.restingHeartRate, let average = input.averageHeartRate2h {
             let delta = max(0, average - resting)
-            score += (delta / 10) * 10
+            score += min(30, (delta / 10) * 10)
         }
 
-        if let hrv = input.hrvSDNNMilliseconds {
-            switch hrv {
-            case ..<30:
-                score += 20
-            case 30..<40:
-                score += 12
-            case 66...:
-                score += 6
-            default:
-                break
-            }
-        }
-
+        // Poor sleep adds physiological stress.
         if input.sleepMinutes24h > 0 {
             switch sleepQualityScore {
             case ..<35:
@@ -272,120 +332,140 @@ public enum BodyBatteryCalculator {
             }
         }
 
+        // Resting heart rate above the personal baseline = accumulated strain.
+        if let baseline, let usualResting = baseline.restingHeartRate, let resting = input.restingHeartRate {
+            let restingDelta = resting - usualResting
+            if restingDelta >= 12 { score += 16 }
+            else if restingDelta >= 8 { score += 10 }
+            else if restingDelta >= 5 { score += 5 }
+        }
+
+        return min(100, max(0, score))
+    }
+
+    // MARK: - Recovery
+
+    /// Recovery mirrors stress on the same autonomic axis: parasympathetic dominance (balance > 50)
+    /// plus good sleep quality. The two scores are intentionally two faces of one signal.
+    private static func recoveryScore(for input: BodyBatteryInput, balance: (value: Int?, trend: String?), sleepQualityScore: Int, baseline: BodyBatteryBaseline?) -> Int {
+        var score = 0
+
+        // Primary: parasympathetic dominance from the HRV axis.
+        if let balanceValue = balance.value {
+            score += min(50, max(0, (balanceValue - 50) * 14 / 10))
+        } else if let hrv = input.hrvSDNNMilliseconds {
+            switch hrv {
+            case 40..<50: score += 8
+            case 50...65: score += 12
+            case 66...: score += 14
+            default: break
+            }
+        }
+
+        // Sleep is the main recovery window; its quality is the strongest sleep-side contributor.
+        switch input.sleepMinutes24h {
+        case 1..<240: score -= 12
+        case 240..<330: score += 2
+        case 330..<(7 * 60): score += 7
+        case (7 * 60)..<(9 * 60): score += 14
+        case (9 * 60)...: score += 12
+        default: break
+        }
+
+        if input.sleepMinutes24h > 0 {
+            switch sleepQualityScore {
+            case ..<35: score -= 12
+            case 35..<55: score -= 6
+            case 55..<70: score += 2
+            case 70..<85: score += 8
+            default: score += 12
+            }
+        }
+
+        // Low acute heart rate (resting-ish) supports recovery.
+        if let resting = input.restingHeartRate, let average = input.averageHeartRate2h, average <= resting + 10 {
+            score += 4
+        }
+
+        // HRV / resting improvements versus the personal baseline reinforce recovery.
         if let baseline {
-            if let usualHRV = baseline.hrvSDNNMilliseconds, let hrv = input.hrvSDNNMilliseconds, usualHRV > 0 {
-                let hrvDropPercent = max(0, (usualHRV - hrv) * 100 / usualHRV)
-                if hrvDropPercent >= 30 {
-                    score += 18
-                } else if hrvDropPercent >= 20 {
-                    score += 12
-                } else if hrvDropPercent >= 10 {
-                    score += 6
-                }
+            if let balanceValue = balance.value, balanceValue > 50 {
+                // Already counted the balance axis above; a small extra bonus when clearly above normal.
+                if balanceValue >= 62 { score += 6 }
             }
             if let usualResting = baseline.restingHeartRate, let resting = input.restingHeartRate {
-                let restingDelta = resting - usualResting
-                if restingDelta >= 12 {
-                    score += 16
-                } else if restingDelta >= 8 {
-                    score += 10
-                } else if restingDelta >= 5 {
-                    score += 5
-                }
+                let restingImprovement = usualResting - resting
+                if restingImprovement >= 8 { score += 6 }
+                else if restingImprovement >= 4 { score += 3 }
             }
-            if let usualSleepQuality = baseline.sleepQualityScore, input.sleepMinutes24h > 0 {
-                let qualityDrop = usualSleepQuality - sleepQualityScore
-                if qualityDrop >= 25 {
-                    score += 12
-                } else if qualityDrop >= 15 {
-                    score += 7
-                }
+            if let usualSleepQuality = baseline.sleepQualityScore {
+                let qualityRise = sleepQualityScore - usualSleepQuality
+                if qualityRise >= 15 { score += 8 }
+                else if qualityRise >= 8 { score += 4 }
             }
         }
 
         return min(100, max(0, score))
     }
 
-    private static func recoveryScore(for input: BodyBatteryInput, sleepQualityScore: Int, baseline: BodyBatteryBaseline?) -> Int {
-        var score = 0
+    // MARK: - Charge / drain model
 
-        switch input.sleepMinutes24h {
-        case 1..<240:
-            score -= 12
-        case 240..<330:
-            score += 2
-        case 330..<(7 * 60):
-            score += 7
-        case (7 * 60)..<(9 * 60):
-            score += 14
-        case (9 * 60)...:
-            score += 12
-        default:
-            break
+    /// The final battery level follows a charge/drain structure rather than an additive pile-up:
+    ///   level = morningCharge - dailyDrain - fatiguePenalty + acuteHRVAdjustment
+    /// `morningCharge` is set by overnight recovery, sleep quality and the HRV axis, then daytime
+    /// activity and accumulated fatigue drain it. Low-stress / high-HRV mornings start high; hard
+    /// activity days with fatigue end low — matching the qualitative curve Garmin produces.
+    private static func level(
+        for input: BodyBatteryInput,
+        balance: (value: Int?, trend: String?),
+        stressScore: Int,
+        drainScore: Int,
+        recoveryScore: Int,
+        sleepQualityScore: Int,
+        dailyDrainScore: Int,
+        fatiguePenalty: Int,
+        baseline: BodyBatteryBaseline?
+    ) -> Int {
+        // Without any sleep data we keep the legacy 100 baseline so first-run devices do not look dead,
+        // but still let acute stress and short-term activity drain it.
+        guard input.sleepMinutes24h > 0 else {
+            let base = 100 - drainScore - dailyDrainScore - fatiguePenalty - stressScore
+            return min(100, max(0, base))
         }
 
-        if input.sleepMinutes24h > 0 {
-            switch sleepQualityScore {
-            case ..<35:
-                score -= 12
-            case 35..<55:
-                score -= 6
-            case 55..<70:
-                score += 2
-            case 70..<85:
-                score += 8
-            default:
-                score += 12
-            }
+        // Morning charge: recovery sets the ceiling, sleep quality fills it, balance shifts it.
+        let sufficientSleepBuffer = sleepQualityScore >= 55 ? 6 : 0
+        var morningCharge = 55 + recoveryScore + sleepQualityScore / 3 + sufficientSleepBuffer
+        if let balanceValue = balance.value {
+            morningCharge += (balanceValue - 50) / 2
         }
 
-        if let hrv = input.hrvSDNNMilliseconds {
-            switch hrv {
-            case 30..<40:
-                score += 4
-            case 40..<50:
-                score += 8
-            case 50...65:
-                score += 12
-            default:
-                break
-            }
-        }
-
-        if let resting = input.restingHeartRate, let average = input.averageHeartRate2h, average <= resting + 10 {
-            score += 4
-        }
-
+        // Personalize the morning charge against the user's own sleep history.
         if let baseline {
-            if let usualHRV = baseline.hrvSDNNMilliseconds, let hrv = input.hrvSDNNMilliseconds, usualHRV > 0 {
-                let hrvRisePercent = max(0, (hrv - usualHRV) * 100 / usualHRV)
-                if hrvRisePercent >= 25 {
-                    score += 10
-                } else if hrvRisePercent >= 15 {
-                    score += 7
-                } else if hrvRisePercent >= 8 {
-                    score += 4
-                }
-            }
-            if let usualResting = baseline.restingHeartRate, let resting = input.restingHeartRate {
-                let restingImprovement = usualResting - resting
-                if restingImprovement >= 8 {
-                    score += 6
-                } else if restingImprovement >= 4 {
-                    score += 3
-                }
+            if let usualSleep = baseline.sleepMinutes, usualSleep > 0 {
+                let sleepDelta = input.sleepMinutes24h - usualSleep
+                if sleepDelta >= 45 { morningCharge += 4 }
+                else if sleepDelta <= -90 { morningCharge -= 10 }
+                else if sleepDelta <= -45 { morningCharge -= 5 }
             }
             if let usualSleepQuality = baseline.sleepQualityScore {
-                let qualityRise = sleepQualityScore - usualSleepQuality
-                if qualityRise >= 15 {
-                    score += 8
-                } else if qualityRise >= 8 {
-                    score += 4
-                }
+                let qualityDelta = sleepQualityScore - usualSleepQuality
+                if qualityDelta >= 12 { morningCharge += 5 }
+                else if qualityDelta <= -20 { morningCharge -= 12 }
+                else if qualityDelta <= -10 { morningCharge -= 6 }
             }
         }
+        morningCharge = min(100, max(35, morningCharge))
 
-        return min(100, max(0, score))
+        // Acute HRV adjustment: a clearly above-normal HRV gives a small top-up, a clearly below-normal
+        // one nudges down — the same axis acting in the moment, not double-counting the morning charge.
+        var acuteAdjustment = 0
+        if let balanceValue = balance.value {
+            if balanceValue >= 64 { acuteAdjustment += 4 }
+            else if balanceValue <= 36 { acuteAdjustment -= 6 }
+        }
+
+        return min(100, max(0, morningCharge - dailyDrainScore - fatiguePenalty + acuteAdjustment))
     }
 
     private static func drainScore(for input: BodyBatteryInput) -> Int {

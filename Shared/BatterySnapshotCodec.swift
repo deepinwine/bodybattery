@@ -26,6 +26,12 @@ public enum BatterySnapshotCodec {
         if let hrv = summary.hrvSDNNMilliseconds {
             payload[PayloadKey.hrvSDNNMilliseconds.rawValue] = hrv
         }
+        if let balance = summary.autonomicBalance {
+            payload[PayloadKey.autonomicBalance.rawValue] = balance
+        }
+        if let trend = summary.hrvTrend {
+            payload[PayloadKey.hrvTrend.rawValue] = trend
+        }
         return payload
     }
 
@@ -42,6 +48,8 @@ public enum BatterySnapshotCodec {
             fatigueLoadScore: message[PayloadKey.fatigueLoadScore.rawValue] as? Int ?? 0,
             sleepQualityScore: message[PayloadKey.sleepQualityScore.rawValue] as? Int ?? 0,
             hrvSDNNMilliseconds: message[PayloadKey.hrvSDNNMilliseconds.rawValue] as? Int,
+            autonomicBalance: message[PayloadKey.autonomicBalance.rawValue] as? Int,
+            hrvTrend: message[PayloadKey.hrvTrend.rawValue] as? String,
             steps2h: message[PayloadKey.steps2h.rawValue] as? Int ?? 0,
             activeEnergyKilocalories2h: message[PayloadKey.activeEnergyKilocalories2h.rawValue] as? Int ?? 0,
             basalEnergyKilocalories2h: message[PayloadKey.basalEnergyKilocalories2h.rawValue] as? Int ?? 0,
@@ -64,6 +72,8 @@ public enum BatterySnapshotCodec {
         case fatigueLoadScore
         case sleepQualityScore
         case hrvSDNNMilliseconds
+        case autonomicBalance
+        case hrvTrend
         case steps2h
         case activeEnergyKilocalories2h
         case basalEnergyKilocalories2h

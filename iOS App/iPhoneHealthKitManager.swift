@@ -163,6 +163,7 @@ final class iPhoneHealthKitManager: ObservableObject {
 
         async let resting = fetchAverageQuantity(.restingHeartRate, unit: HKUnit.count().unitDivided(by: .minute()), since: start, until: todayStart, limit: 32)
         async let hrv = fetchAverageQuantity(.heartRateVariabilitySDNN, unit: .secondUnit(with: .milli), since: start, until: todayStart, limit: 80)
+        async let hrvStdDev = fetchHRVStandardDeviation(since: start, until: todayStart)
         async let steps = fetchQuantityTotal(.stepCount, unit: .count(), since: start, until: todayStart)
         async let activeEnergy = fetchQuantityTotal(.activeEnergyBurned, unit: .kilocalorie(), since: start, until: todayStart)
         async let sleep = fetchSleepMinutes(since: start, until: todayStart, limit: 160)
@@ -180,6 +181,7 @@ final class iPhoneHealthKitManager: ObservableObject {
 
         let baselineResting = await resting
         let baselineHRV = await hrv
+        let baselineHRVStdDev = await hrvStdDev
         let baselineSteps = await steps
         let baselineActiveEnergy = await activeEnergy
         let baselineFatigueLoad = await fatigueLoad
@@ -187,6 +189,7 @@ final class iPhoneHealthKitManager: ObservableObject {
         let baseline = BodyBatteryBaseline(
             restingHeartRate: baselineResting.value,
             hrvSDNNMilliseconds: baselineHRV.value,
+            hrvSDNNStandardDeviation: baselineHRVStdDev,
             sleepQualityScore: sleepQuality,
             sleepMinutes: baselineSleep.minutes > 0 ? baselineSleep.minutes / sleepDays : nil,
             stepsToday: (baselineSteps.value ?? 0) / 7,
@@ -283,6 +286,55 @@ final class iPhoneHealthKitManager: ObservableObject {
                 return
             }
             scheduleTimeout(for: query, oneShot: oneShot, fallback: HealthQuantityResult(value: nil, errorDescription: "查询超时"))
+            healthStore.execute(query)
+        }
+    }
+
+    /// Day-to-day standard deviation of HRV (SDNN) over the baseline window.
+    ///
+    /// Pulls all HRV samples in the window, averages them per calendar day, then takes the population
+    /// standard deviation of those daily means. This is the dispersion the calculator needs to turn an
+    /// absolute HRV gap into a z-score (so "10 ms above normal" is weighted by how stable the user's
+    /// HRV actually is). Days with no samples are skipped rather than counted as zero.
+    private func fetchHRVStandardDeviation(since start: Date, until end: Date) async -> Int? {
+        guard let type = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            return nil
+        }
+        let unit = HKUnit.secondUnit(with: .milli)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [.strictStartDate])
+
+        return await withCheckedContinuation { continuation in
+            let oneShot = OneShotContinuation(continuation)
+            var query: HKSampleQuery?
+            query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 320, sortDescriptors: nil) { _, samples, _ in
+                let samples = samples as? [HKQuantitySample] ?? []
+                guard !samples.isEmpty else {
+                    _ = oneShot.resume(returning: nil)
+                    return
+                }
+                let calendar = Calendar.current
+                var dailyTotals: [Date: (sum: Double, count: Int)] = [:]
+                for sample in samples {
+                    let day = calendar.startOfDay(for: sample.endDate)
+                    let value = sample.quantity.doubleValue(for: unit)
+                    let existing = dailyTotals[day] ?? (sum: 0, count: 0)
+                    dailyTotals[day] = (sum: existing.sum + value, count: existing.count + 1)
+                }
+                let dailyMeans = dailyTotals.values.map { $0.sum / Double($0.count) }
+                guard dailyMeans.count > 1 else {
+                    _ = oneShot.resume(returning: nil)
+                    return
+                }
+                let count = Double(dailyMeans.count)
+                let mean = dailyMeans.reduce(0, +) / count
+                let variance = dailyMeans.map { pow($0 - mean, 2) }.reduce(0, +) / count
+                _ = oneShot.resume(returning: Int(variance.squareRoot().rounded()))
+            }
+            guard let query else {
+                _ = oneShot.resume(returning: nil)
+                return
+            }
+            scheduleTimeout(for: query, oneShot: oneShot, fallback: nil as Int?)
             healthStore.execute(query)
         }
     }

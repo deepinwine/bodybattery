@@ -80,6 +80,8 @@ final class BodyBatterySerializationTests: XCTestCase {
             fatigueLoadScore: 48,
             sleepQualityScore: 67,
             hrvSDNNMilliseconds: 54,
+            autonomicBalance: 63,
+            hrvTrend: "高于平时",
             steps2h: 2_400,
             activeEnergyKilocalories2h: 130,
             basalEnergyKilocalories2h: 78,
@@ -108,7 +110,21 @@ final class BodyBatterySerializationTests: XCTestCase {
 
         XCTAssertNotNil(decoded)
         XCTAssertEqual(decoded?.hrvSDNNMilliseconds, nil)
+        // 无 HRV 时，autonomicBalance / hrvTrend 也应为 nil（缺失字段降级）。
+        XCTAssertNil(decoded?.autonomicBalance)
+        XCTAssertNil(decoded?.hrvTrend)
         XCTAssertEqual(decoded?.level, 50)
+    }
+
+    func testCodecDecodesLegacyPayloadWithoutNewMetrics() {
+        // 旧版本 payload 只含 batteryLevel，新指标字段缺失时应降级为 nil，不崩。
+        let message: [String: Any] = ["batteryLevel": 42]
+
+        let decoded = BatterySnapshotCodec.summary(from: message)
+
+        XCTAssertEqual(decoded?.level, 42)
+        XCTAssertNil(decoded?.autonomicBalance)
+        XCTAssertNil(decoded?.hrvTrend)
     }
 
     func testCodecReturnsNilForEmptyMessage() {
@@ -138,6 +154,21 @@ final class BodyBatterySerializationTests: XCTestCase {
         // WatchConnectivity 历史上用 "batteryLevel" 作为主键，这里锁定它不被误改。
         let payload = BatterySnapshotCodec.payload(for: BodyBatterySummary(level: 88, stressScore: 1, recoveryScore: 1, drainScore: 1))
         XCTAssertEqual(payload["batteryLevel"] as? Int, 88)
+    }
+
+    func testCodecUsesStableMetricKeys() {
+        // 自律平衡与 HRV 趋势的 wire key 锁定，避免两端漂移。
+        let summary = BodyBatterySummary(
+            level: 70,
+            stressScore: 20,
+            recoveryScore: 30,
+            drainScore: 10,
+            autonomicBalance: 58,
+            hrvTrend: "高于平时"
+        )
+        let payload = BatterySnapshotCodec.payload(for: summary)
+        XCTAssertEqual(payload["autonomicBalance"] as? Int, 58)
+        XCTAssertEqual(payload["hrvTrend"] as? String, "高于平时")
     }
 
     func testRequestPhoneSnapshotKeyIsStable() {

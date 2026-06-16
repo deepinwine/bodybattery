@@ -224,12 +224,23 @@ struct MetricGridView: View {
         LazyVGrid(columns: columns, spacing: 10) {
             MetricTile(title: "压力", value: "\(summary.stressScore)", tint: .orange)
             MetricTile(title: "恢复", value: "\(summary.recoveryScore)", tint: .green)
+            MetricTile(title: "自律", value: summary.autonomicBalance.map { "\($0)" } ?? "--", tint: .indigo)
             MetricTile(title: "日耗", value: "\(summary.dailyDrainScore)", tint: .red)
             MetricTile(title: "疲劳", value: "\(summary.fatigueLoadScore)", tint: .purple)
             MetricTile(title: "睡眠", value: "\(summary.sleepQualityScore)", tint: .blue)
-            MetricTile(title: "HRV", value: summary.hrvSDNNMilliseconds.map { "\($0)ms" } ?? "--", tint: .cyan)
+            MetricTile(title: "HRV", value: hrvTileValue, tint: .cyan)
             MetricTile(title: "今日", value: "\(summary.activeEnergyKilocaloriesToday + summary.basalEnergyKilocaloriesToday)kcal", tint: .mint)
         }
+    }
+
+    /// HRV 数值 + 相对个人基线的趋势文案，例如「52ms · 接近平时」。
+    /// 没有趋势文案时只显示数值，没有 HRV 时显示占位。
+    private var hrvTileValue: String {
+        let ms = summary.hrvSDNNMilliseconds.map { "\($0)ms" } ?? "--"
+        if let trend = summary.hrvTrend {
+            return "\(ms) · \(trend)"
+        }
+        return ms
     }
 }
 

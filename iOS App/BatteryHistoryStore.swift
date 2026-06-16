@@ -12,6 +12,8 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
     let fatigueLoadScore: Int
     let sleepQualityScore: Int
     let hrvSDNNMilliseconds: Int?
+    let autonomicBalance: Int?
+    let hrvTrend: String?
     let steps2h: Int
     let activeEnergyKilocalories2h: Int
     let basalEnergyKilocalories2h: Int
@@ -31,6 +33,8 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
         fatigueLoadScore: Int = 0,
         sleepQualityScore: Int = 0,
         hrvSDNNMilliseconds: Int? = nil,
+        autonomicBalance: Int? = nil,
+        hrvTrend: String? = nil,
         steps2h: Int = 0,
         activeEnergyKilocalories2h: Int = 0,
         basalEnergyKilocalories2h: Int = 0,
@@ -49,6 +53,8 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
         self.fatigueLoadScore = min(100, max(0, fatigueLoadScore))
         self.sleepQualityScore = min(100, max(0, sleepQualityScore))
         self.hrvSDNNMilliseconds = hrvSDNNMilliseconds
+        self.autonomicBalance = autonomicBalance
+        self.hrvTrend = hrvTrend
         self.steps2h = max(0, steps2h)
         self.activeEnergyKilocalories2h = max(0, activeEnergyKilocalories2h)
         self.basalEnergyKilocalories2h = max(0, basalEnergyKilocalories2h)
@@ -69,6 +75,8 @@ struct BatteryRecord: Codable, Identifiable, Equatable {
             fatigueLoadScore: summary.fatigueLoadScore,
             sleepQualityScore: summary.sleepQualityScore,
             hrvSDNNMilliseconds: summary.hrvSDNNMilliseconds,
+            autonomicBalance: summary.autonomicBalance,
+            hrvTrend: summary.hrvTrend,
             steps2h: summary.steps2h,
             activeEnergyKilocalories2h: summary.activeEnergyKilocalories2h,
             basalEnergyKilocalories2h: summary.basalEnergyKilocalories2h,
@@ -123,6 +131,8 @@ final class BatteryHistoryStore: ObservableObject {
             fatigueLoadScore: latest.fatigueLoadScore,
             sleepQualityScore: latest.sleepQualityScore,
             hrvSDNNMilliseconds: latest.hrvSDNNMilliseconds,
+            autonomicBalance: latest.autonomicBalance,
+            hrvTrend: latest.hrvTrend,
             steps2h: latest.steps2h,
             activeEnergyKilocalories2h: latest.activeEnergyKilocalories2h,
             basalEnergyKilocalories2h: latest.basalEnergyKilocalories2h,
@@ -195,6 +205,7 @@ final class BatteryHistoryStore: ObservableObject {
                 let steps = [1_500, 5_200, 8_400][hour == 9 ? 0 : (hour == 15 ? 1 : 2)] + (dayOffset % 5) * 280
                 let activeEnergy = [60, 260, 520][hour == 9 ? 0 : (hour == 15 ? 1 : 2)] + (dayOffset % 4) * 25
                 let basalEnergy = [220, 820, 1_420][hour == 9 ? 0 : (hour == 15 ? 1 : 2)]
+                let hrv = max(28, min(68, 56 - dayOffset % 20))
                 return BatteryRecord(
                     date: sampleDate,
                     level: level,
@@ -204,7 +215,9 @@ final class BatteryHistoryStore: ObservableObject {
                     dailyDrainScore: min(100, hourDrain + dayOffset % 18),
                     fatigueLoadScore: min(100, 18 + dayOffset % 44 + (hour == 21 ? 6 : 0)),
                     sleepQualityScore: max(35, min(94, 78 - dayOffset % 16)),
-                    hrvSDNNMilliseconds: max(28, min(68, 56 - dayOffset % 20)),
+                    hrvSDNNMilliseconds: hrv,
+                    autonomicBalance: max(20, min(80, 50 + (hrv - 50) / 2)),
+                    hrvTrend: hrv >= 56 ? "高于平时" : (hrv <= 44 ? "低于平时" : "接近平时"),
                     steps2h: hour == 15 ? 2_600 : 900,
                     activeEnergyKilocalories2h: hour == 15 ? 180 : 45,
                     basalEnergyKilocalories2h: 80,

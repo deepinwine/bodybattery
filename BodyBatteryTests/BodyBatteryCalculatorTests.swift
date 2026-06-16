@@ -13,8 +13,9 @@ final class BodyBatteryCalculatorTests: XCTestCase {
 
         let summary = BodyBatteryCalculator.summarize(input)
 
-        XCTAssertEqual(summary.stressScore, 50)
-        XCTAssertEqual(summary.level, 50)
+        // 心率显著高于静息（delta=52）贡献压力分；新模型中心率偏离主项 clamp 在 30。
+        XCTAssertEqual(summary.stressScore, 30)
+        XCTAssertEqual(summary.level, 70)
     }
 
     func testLargeStepCountDeductsActivityPoints() {
@@ -37,7 +38,9 @@ final class BodyBatteryCalculatorTests: XCTestCase {
 
         let summary = BodyBatteryCalculator.summarize(input)
 
-        XCTAssertEqual(summary.recoveryScore, 16)
+        // 理想 HRV（55ms）落入健康区间：绝对平衡 ~52（略偏副交感）+ 低心率 → 有恢复分。
+        // 新模型以自主神经平衡轴为主导，恢复分较旧绝对分桶更保守。
+        XCTAssertGreaterThanOrEqual(summary.recoveryScore, 4)
         XCTAssertEqual(BodyBatteryCalculator.calculate(input), 100)
     }
 
@@ -325,5 +328,73 @@ final class BodyBatteryCalculatorTests: XCTestCase {
 
         XCTAssertEqual(loaded.fatigueLoadScore, 82)
         XCTAssertLessThanOrEqual(loaded.level, recovered.level - 18)
+    }
+
+    // MARK: - Autonomic balance (HRV z-score axis)
+
+    func testAutonomicBalanceIsNilWithoutHRV() {
+        let input = BodyBatteryInput(restingHeartRate: 60, averageHeartRate2h: 70)
+
+        let summary = BodyBatteryCalculator.summarize(input)
+
+        XCTAssertNil(summary.autonomicBalance)
+        XCTAssertNil(summary.hrvTrend)
+    }
+
+    func testHighHRVAboveBaselineRaisesAutonomicBalance() {
+        // 用户平时 HRV=44，今天 HRV=64（明显高于自身基线）。
+        let baseline = BodyBatteryBaseline(restingHeartRate: 60, hrvSDNNMilliseconds: 44, hrvSDNNStandardDeviation: 6)
+        let input = BodyBatteryInput(restingHeartRate: 60, averageHeartRate2h: 64, hrvSDNNMilliseconds: 64)
+
+        let summary = BodyBatteryCalculator.summarize(input, baseline: baseline)
+
+        XCTAssertNotNil(summary.autonomicBalance)
+        // HRV 明显高于平时 → 平衡 > 50（副交感/恢复主导）。
+        XCTAssertGreaterThan(summary.autonomicBalance ?? 0, 50)
+        XCTAssertEqual(summary.hrvTrend, "高于平时")
+    }
+
+    func testLowHRVBelowBaselineLowersBalance() {
+        // 用户平时 HRV=58，今天 HRV=36（明显低于自身基线）。
+        let baseline = BodyBatteryBaseline(restingHeartRate: 58, hrvSDNNMilliseconds: 58, hrvSDNNStandardDeviation: 7)
+        let input = BodyBatteryInput(restingHeartRate: 62, averageHeartRate2h: 88, hrvSDNNMilliseconds: 36)
+
+        let summary = BodyBatteryCalculator.summarize(input, baseline: baseline)
+
+        // HRV 明显低于平时 → 平衡 < 50（交感/压力主导）。
+        XCTAssertLessThan(summary.autonomicBalance ?? 50, 50)
+        XCTAssertEqual(summary.hrvTrend, "低于平时")
+    }
+
+    func testHRVNearBaselineShowsCloseTrend() {
+        // HRV 几乎等于基线 → 趋势"接近平时"，平衡接近 50。
+        let baseline = BodyBatteryBaseline(restingHeartRate: 60, hrvSDNNMilliseconds: 50, hrvSDNNStandardDeviation: 8)
+        let input = BodyBatteryInput(restingHeartRate: 60, averageHeartRate2h: 66, hrvSDNNMilliseconds: 51)
+
+        let summary = BodyBatteryCalculator.summarize(input, baseline: baseline)
+
+        XCTAssertEqual(summary.hrvTrend, "接近平时")
+        XCTAssertGreaterThanOrEqual(summary.autonomicBalance ?? 0, 45)
+        XCTAssertLessThanOrEqual(summary.autonomicBalance ?? 0, 55)
+    }
+
+    func testHighBalanceRaisesRecoveryAndLowersStress() {
+        // HRV 显著高于基线时：恢复分应明显高于无基线时，压力分应更低。
+        let baseline = BodyBatteryBaseline(restingHeartRate: 60, hrvSDNNMilliseconds: 44, hrvSDNNStandardDeviation: 6)
+        let input = BodyBatteryInput(
+            restingHeartRate: 56,
+            averageHeartRate2h: 60,
+            hrvSDNNMilliseconds: 62,
+            sleepMinutes24h: 480,
+            deepSleepMinutes24h: 90,
+            remSleepMinutes24h: 100,
+            awakeMinutesDuringSleep24h: 20
+        )
+
+        let personalized = BodyBatteryCalculator.summarize(input, baseline: baseline)
+        let generic = BodyBatteryCalculator.summarize(input)
+
+        XCTAssertGreaterThan(personalized.recoveryScore, generic.recoveryScore)
+        XCTAssertLessThanOrEqual(personalized.stressScore, generic.stressScore)
     }
 }

@@ -71,9 +71,10 @@ struct TodayView: View {
             }
             .frame(width: 118, height: 118)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 5) {
                 WatchMetric(title: "压", value: "\(summary.stressScore)", color: .orange)
                 WatchMetric(title: "眠", value: "\(summary.sleepQualityScore)", color: .blue)
+                WatchMetric(title: "衡", value: summary.autonomicBalance.map { "\($0)" } ?? "--", color: .indigo)
                 WatchMetric(title: "疲", value: "\(summary.fatigueLoadScore)", color: .red)
             }
 
@@ -109,7 +110,7 @@ private struct WatchMetric: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
-        .frame(width: 42, height: 28)
+        .frame(width: 40, height: 28)
         .background(color.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
